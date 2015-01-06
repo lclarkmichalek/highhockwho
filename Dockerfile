@@ -3,7 +3,7 @@ FROM haskell:7.8
 ADD ./highhockwho.cabal /opt/highhockwho.cabal
 WORKDIR /opt/
 
-RUN cabal install --only-dependencies -j4
+RUN cabal update && cabal install --only-dependencies -j4
 
 ADD . /opt
 
