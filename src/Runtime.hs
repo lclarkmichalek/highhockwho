@@ -12,16 +12,19 @@ import qualified Data.ByteString.Lazy as BS
 import qualified Network.Docker.Types as D
 import qualified System.Log.Logger as L
 import System.Log.Handler.Simple (verboseStreamHandler)
-import Data.Aeson (eitherDecode)
+import Data.Aeson (eitherDecode, object)
 import Data.List (find)
+import Data.Maybe (fromMaybe)
 import System.Environment (getEnvironment)
+import System.Exit (exitSuccess)
 import Control.Concurrent.Async (async, wait, Async)
 import Network.Socket (inet_ntoa)
-import System.Exit (exitFailure)
 import System.IO (stderr)
+import Control.Exception (try)
+import Control.Monad (when)
 import Control.Lens
 
-import Config (Config(..))
+import Config
 
 data Runtime = Runtime
                { _runtimeConfig :: !Config
@@ -30,7 +33,6 @@ data Runtime = Runtime
                } deriving (Show, Eq)
 
 makeFields ''Runtime
-
 makeFields ''Config
 
 defaultConfigPath :: String
@@ -39,34 +41,49 @@ defaultConfigPath = "/etc/highhock.json"
 -- | Takes the command line arguments, returns a Runtime, or exits with a
 -- pretty (user readable) error
 createRuntime :: [String] -> IO Runtime
-createRuntime ["-c", cfgPath] = createRuntime' cfgPath
-createRuntime ["--config", cfgPath] = createRuntime' cfgPath
-createRuntime [] = createRuntime' defaultConfigPath
-createRuntime _ = do
-  putStrLn "highhock [-c CONFIG]"
-  putStrLn ""
-  putStrLn "A simple docker watcher, etcd inserter"
-  exitFailure
+createRuntime args = do
+  when ("-h" `elem` args || "--help" `elem` args) $
+    putStrLn argHelp >> exitSuccess
 
-createRuntime' :: FilePath -> IO Runtime
-createRuntime' cfgPath = do
-  cfg <- loadConfig cfgPath
+  cfg <- loadConfig args
+  setupLogging cfg
+
+  L.infoM "runtime" $ "Loaded config: " ++ show cfg
   mph <- findPublicHost cfg
   ph <- must mph "Could not find public host"
+  L.infoM "runtime" $ "Found public host: " ++ show ph
   mdv <- findDockerVersion cfg
   dv <- must mdv "Could not find docker version"
+  L.infoM "runtime" $ "Found docker version: " ++ show dv
   return $ Runtime cfg ph dv
 
 must :: Maybe a -> String -> IO a
 must (Just a) _ = return a
 must _ err = fail err
 
-loadConfig :: FilePath -> IO Config
-loadConfig p = do
-  contents <- BS.readFile p
-  case eitherDecode contents of
-   Left err -> error $ "Failed to load config file: " ++ err
-   Right v -> return v
+loadConfig :: [String] -> IO Config
+loadConfig args = do
+  let cfgPath = fromMaybe defaultConfigPath (findCfgPath args)
+      warn = L.warningM "loadConfig"
+  mcontents <- (try $ BS.readFile cfgPath) :: IO (Either IOError BS.ByteString)
+  conf <- case mcontents of
+   Left err ->
+     (warn $ "failed to load config from " ++ cfgPath ++ ": " ++ show err) >>
+     return (object [])
+   Right contents -> case eitherDecode contents of
+     Left err ->
+       (warn $ "Failed to read config " ++ cfgPath ++ ": " ++ err) >>
+       return (object [])
+     Right v -> return v
+  return . fromArgs args .
+    fromJSON conf $
+    defaultConfig
+
+findCfgPath :: [String] -> Maybe FilePath
+findCfgPath ("-c":cfgPath:_) = Just cfgPath
+findCfgPath ("--config":cfgPath:_) = Just cfgPath
+findCfgPath (_:xs) = findCfgPath xs
+findCfgPath _ = Nothing
 
 -- TODO: Don't have access to the docker lib docs atm
 findDockerVersion :: Config -> IO (Maybe T.Text)
@@ -97,20 +114,12 @@ hostFromConfig = view publicHost
 hostFromEnvVar :: Config -> IO (Maybe T.Text)
 hostFromEnvVar _ = fmap (fmap (T.pack . snd) . find ((==) "EXTERNAL_IP" . fst)) getEnvironment
 
--- | The interface to look up ip on if no interface configured
-defaultNetworkInterface :: String
-defaultNetworkInterface = "eth0"
-
 hostFromNetworkInterface :: Config -> IO (Maybe T.Text)
-hostFromNetworkInterface c =
-  let ifame = case c ^. publicInterface of
-        Nothing -> defaultNetworkInterface
-        Just name -> name
-  in do
-    entries <- N.getNetworkEntries True
-    case find (elem ifame . allNetworkNames) entries of
-     Just n -> fmap Just $ getNetworkAddr n
-     Nothing -> return Nothing
+hostFromNetworkInterface c = do
+  entries <- N.getNetworkEntries True
+  case find (elem (c ^. publicInterface) . allNetworkNames) entries of
+   Just n -> fmap Just $ getNetworkAddr n
+   Nothing -> return Nothing
 
 allNetworkNames :: N.NetworkEntry -> [N.NetworkName]
 allNetworkNames ne = N.networkName ne : N.networkAliases ne
@@ -126,7 +135,7 @@ dockerClientOpts r = D.DockerClientOpts ver url
   where ver = T.unpack $ r ^. dockerVersion
         url = r ^. config . dockerUrl
 
-setupLogging :: Runtime -> IO ()
+setupLogging :: Config -> IO ()
 setupLogging _ = do
   s <- verboseStreamHandler stderr L.DEBUG
   L.updateGlobalLogger L.rootLoggerName (L.addHandler s . L.setLevel L.DEBUG . L.removeHandler)

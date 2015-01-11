@@ -26,7 +26,6 @@ main = do
   args <- getArgs
   r <- createRuntime args
 
-  setupLogging r
   infoM "main" "Starting main watcher"
 
   wc <- C.newController
