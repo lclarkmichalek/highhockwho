@@ -16,7 +16,6 @@ import Control.Concurrent.Async (async, wait, Async)
 import Control.Monad.IO.Class (liftIO)
 import Data.Text.Read (decimal)
 import Network.Socket (inet_ntoa)
-import Debug.Trace (trace)
 
 import Config
 import Inserter (Domain, defaultDomain)
@@ -131,5 +130,6 @@ hostFromNetworkInterface c =
 allNetworkNames :: N.NetworkEntry -> [N.NetworkName]
 allNetworkNames ne = N.networkName ne : N.networkAliases ne
 
+-- This is much more complicated than it should be
 getNetworkAddr :: N.NetworkEntry -> IO T.Text
 getNetworkAddr = fmap T.pack . inet_ntoa . fromIntegral . N.networkAddress
