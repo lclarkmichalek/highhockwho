@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                highhockwho
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            Docker daemon watcher for skydns2
 -- description:         
 homepage:            github.com/bluepeppers/highhockwho
@@ -10,19 +10,51 @@ license:             AGPL-3
 license-file:        LICENSE
 author:              Laurie Clark-Michalek
 maintainer:          lclarkmichalek@gmail.com
--- copyright:           
+--copyright:           
 category:            Network
 build-type:          Simple
 extra-source-files:  README.md, Dockerfile
 cabal-version:       >=1.10
 
-executable highhockwho
-  main-is:             Main.hs
+library
+  exposed-modules:     Network.HighHock.Main,
+                       Network.HighHock.Config,
+                       Network.HighHock.Controller,
+                       Network.HighHock.Extractor,
+                       Network.HighHock.Inserter,
+                       Network.HighHock.Registry,
+                       Network.HighHock.Runtime,
+                       Network.HighHock.Watcher
+
   ghc-options:         -Wall
-  default-extensions:  OverloadedStrings, TemplateHaskell, MultiParamTypeClasses, FunctionalDependencies, TypeSynonymInstances, FlexibleInstances
-  -- other-modules:       
-  -- other-extensions:    
+  default-extensions:  OverloadedStrings,
+                       TemplateHaskell,
+                       MultiParamTypeClasses,
+                       FunctionalDependencies,
+                       TypeSynonymInstances,
+                       FlexibleInstances
   build-depends:       base >=4.7 && <4.8,
                        mtl, conduit, aeson, bytestring, text, docker, etcd, transformers, lens, unordered-containers, async, network, containers, unix, wreq, hslogger, vector, stm
   hs-source-dirs:      src
+  default-language:    Haskell2010
+
+executable highhockwho
+  main-is:             Main.hs
+  build-depends:       base, highhockwho
+  default-language:    Haskell2010
+
+test-suite unit-tests
+  type:                exitcode-stdio-1.0
+  main-is:             Tests.hs
+  default-extensions:  OverloadedStrings,
+                       TemplateHaskell,
+                       MultiParamTypeClasses,
+                       FunctionalDependencies,
+                       TypeSynonymInstances,
+                       FlexibleInstances
+  build-depends:       base >=4.7 && <4.8,
+                       hspec >= 2.0,
+                       highhockwho,
+                       mtl, conduit, aeson, bytestring, text, docker, etcd, transformers, lens, unordered-containers, async, network, containers, unix, wreq, hslogger, vector, stm
+  hs-source-dirs:      tests
   default-language:    Haskell2010

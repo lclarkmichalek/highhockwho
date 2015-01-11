@@ -1,5 +1,5 @@
-module Runtime
-       (Runtime(..)
+module Network.HighHock.Runtime
+       ( Runtime(..)
        , createRuntime
        , Config(..)
        , dockerClientOpts
@@ -25,7 +25,7 @@ import Control.Monad (when)
 import Control.Monad.IO.Class (liftIO)
 import Control.Lens
 
-import Config
+import Network.HighHock.Config
 
 data Runtime = Runtime
                { _runtimeConfig :: !Config

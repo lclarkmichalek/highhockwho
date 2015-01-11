@@ -1,10 +1,11 @@
-module Watcher (
-  watchContainer, watchContainers
-  ) where
+module Network.HighHock.Watcher
+       ( watchContainer
+       , watchContainers
+       ) where
 
 import Data.Conduit
 import qualified Data.Text as T
-import qualified Controller as C
+import qualified Network.HighHock.Controller as C
 import qualified Data.Aeson as A
 import Data.Aeson (FromJSON(..))
 
@@ -13,7 +14,8 @@ import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Applicative ((<$>))
 import Control.Monad (mzero)
 import Control.Exception (catch, SomeException)
-import Runtime
+
+import Network.HighHock.Runtime
 
 import System.Log.Logger
 

@@ -1,4 +1,8 @@
-module Inserter ( inserter, Domain(..), defaultDomain ) where
+module Network.HighHock.Inserter
+       ( inserter
+       , Domain(..)
+       , defaultDomain
+       ) where
 
 import Data.Conduit
 import Data.Aeson (ToJSON, toJSON, object, encode)
@@ -12,7 +16,7 @@ import qualified Network.Etcd as NE
 
 import System.Log.Logger
 
-import Runtime
+import Network.HighHock.Runtime
 
 data Domain = Domain
               { _domainPath :: !T.Text

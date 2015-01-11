@@ -1,4 +1,4 @@
-module Controller (
+module Network.HighHock.Controller (
   Controller,
   newController,
   stop,

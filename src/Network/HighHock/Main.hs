@@ -1,11 +1,11 @@
-module Main where
+module Network.HighHock.Main where
 
-import qualified Registry as R
-import qualified Watcher as W
-import qualified Extractor as E
-import qualified Inserter as I
-import qualified Controller as C
-import Runtime
+import qualified Network.HighHock.Registry as R
+import qualified Network.HighHock.Watcher as W
+import qualified Network.HighHock.Extractor as E
+import qualified Network.HighHock.Inserter as I
+import qualified Network.HighHock.Controller as C
+import Network.HighHock.Runtime
 
 import Data.Conduit
 import qualified Data.Text as T

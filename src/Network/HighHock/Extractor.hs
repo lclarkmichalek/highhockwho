@@ -1,4 +1,4 @@
-module Extractor where
+module Network.HighHock.Extractor where
 
 import Data.Conduit
 import qualified Data.Aeson as A
@@ -12,8 +12,8 @@ import Control.Applicative ((<|>), (<$>))
 import Control.Monad.IO.Class (liftIO)
 import Data.Text.Read (decimal)
 
-import Runtime
-import Inserter (Domain, defaultDomain)
+import Network.HighHock.Runtime
+import Network.HighHock.Inserter (Domain, defaultDomain)
 
 import System.Log.Logger
 

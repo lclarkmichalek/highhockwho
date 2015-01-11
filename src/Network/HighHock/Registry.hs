@@ -1,13 +1,18 @@
-module Registry (
-  Registry, newRegistry, applyContainer, insertContainer, removeContainer,
-  removeMissingContainers, insertMissingContainers,
-  ) where
+module Network.HighHock.Registry
+       ( Registry
+       , newRegistry
+       , applyContainer
+       , insertContainer
+       , removeContainer
+       , removeMissingContainers
+       , insertMissingContainers
+       ) where
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Control.Concurrent as CC
 
-import qualified Controller as C
+import qualified Network.HighHock.Controller as C
 
 import Control.Monad (foldM)
 

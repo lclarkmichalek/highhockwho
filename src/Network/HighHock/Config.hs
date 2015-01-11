@@ -1,4 +1,9 @@
-module Config(Config(..), fromJSON, fromArgs, argHelp, defaultConfig) where
+module Network.HighHock.Config
+       ( Config(..)
+       , fromJSON
+       , fromArgs
+       , argHelp
+       , defaultConfig) where
 
 import qualified Data.Text as T
 import Data.Aeson hiding (fromJSON)
