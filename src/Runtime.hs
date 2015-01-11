@@ -22,6 +22,7 @@ import Network.Socket (inet_ntoa)
 import System.IO (stderr)
 import Control.Exception (try)
 import Control.Monad (when)
+import Control.Monad.IO.Class (liftIO)
 import Control.Lens
 
 import Config
@@ -51,10 +52,10 @@ createRuntime args = do
   L.infoM "runtime" $ "Loaded config: " ++ show cfg
   mph <- findPublicHost cfg
   ph <- must mph "Could not find public host"
-  L.infoM "runtime" $ "Found public host: " ++ show ph
+  L.noticeM "runtime" $ "Found public host: " ++ show ph
   mdv <- findDockerVersion cfg
   dv <- must mdv "Could not find docker version"
-  L.infoM "runtime" $ "Found docker version: " ++ show dv
+  L.noticeM "runtime" $ "Found docker version: " ++ show dv
   return $ Runtime cfg ph dv
 
 must :: Maybe a -> String -> IO a
@@ -117,6 +118,7 @@ hostFromEnvVar _ = fmap (fmap (T.pack . snd) . find ((==) "EXTERNAL_IP" . fst)) 
 hostFromNetworkInterface :: Config -> IO (Maybe T.Text)
 hostFromNetworkInterface c = do
   entries <- N.getNetworkEntries True
+  liftIO $ L.infoM "hostFromNetworkInterface" $ "Networks: " ++ show entries
   case find (elem (c ^. publicInterface) . allNetworkNames) entries of
    Just n -> fmap Just $ getNetworkAddr n
    Nothing -> return Nothing
