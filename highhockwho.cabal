@@ -23,6 +23,6 @@ executable highhockwho
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8,
-                       mtl, conduit, aeson, bytestring, text, docker, etcd, transformers, lens, unordered-containers, async, network, containers, unix, wreq, hslogger, vector
+                       mtl, conduit, aeson, bytestring, text, docker, etcd, transformers, lens, unordered-containers, async, network, containers, unix, wreq, hslogger, vector, stm
   hs-source-dirs:      src
   default-language:    Haskell2010

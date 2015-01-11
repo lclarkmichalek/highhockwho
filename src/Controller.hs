@@ -6,29 +6,32 @@ module Controller (
   wait,
   ticker) where
 
-import Control.Monad (void)
-import qualified Control.Concurrent as C
-import qualified System.Mem.Weak as W
+import Control.Monad (void, when)
+import qualified Control.Concurrent.STM.TMVar as STM
+import Control.Monad.STM (atomically)
+import Control.Concurrent (threadDelay)
 
-data Controller = Controller (C.MVar Bool)
+data Controller = Controller (STM.TMVar Bool)
 
 newController :: IO Controller
-newController = fmap Controller C.newEmptyMVar
+newController = atomically $ fmap Controller STM.newEmptyTMVar
 
 stop :: Controller -> IO ()
-stop (Controller c) = void $ C.putMVar c False
+stop (Controller c) = void $ atomically $ STM.swapTMVar c False
 
-trigger :: Controller -> IO ()
-trigger (Controller c) = void $ C.putMVar c True
+-- | Returns False if the controller has been stopped
+trigger :: Controller -> IO Bool
+trigger (Controller c) = atomically $ do
+  v <- STM.tryTakeTMVar c
+  case v of
+   Just v' -> return v'
+   Nothing -> STM.putTMVar c True >> return True
 
 -- | Returns False if the controller has been 'stopped'
 wait :: Controller -> IO Bool
-wait (Controller c) = C.takeMVar c
+wait (Controller c) = atomically $ STM.takeTMVar c
 
 ticker :: Controller -> Int -> IO ()
-ticker c i = W.mkWeakPtr c Nothing >>= ticker'
-  where ticker' wc = do
-          mc <- W.deRefWeak wc
-          case mc of
-           Just c' -> trigger c' >> C.threadDelay i >> ticker' wc
-           Nothing -> return ()
+ticker c i =
+  trigger c >>= \s ->
+  when s $ threadDelay i >> ticker c i
