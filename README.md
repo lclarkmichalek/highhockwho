@@ -8,22 +8,31 @@ Configuration
 
 HighHock takes a single configuration file, which can be passed via the
 `--config` argument variable, or will otherwise be assumed to be at
-`/etc/highhock.json`. Its format is defined below:
+`/etc/highhock.json`. Its format is defined below with default values:
 
     {
-      "etcdUrl": "http://localhost:4001/", # The url etcd can be found at
-      "etcdTTL": 60, # The ttl of the keys inserted into etcd
-      "skydnsDomain": "highhock.local", # The domain prefix to insert services under
-      "skydnsTTL": 60, # The ttl of skydns records. Ignored if lower than etcdTTL
-      "dockerVersion": "v1.16", # The version of the doker API. Prob should be autodetected
-      "dockerUrl": "http://localhost:2375", # The url of the Docker API
-
-      "publicHost": "10.77.66.0", # The host to insert records as. Not required
-      "publicInterface": "eth0", # The interface to try and find the public host from. Not required
+      "etcd": {
+        "url": "http://127.0.0.1:4001/", # The url etcd can be found at
+        "ttl": 60, # The ttl of the keys inserted into etcd
+      },
+      "skydns": {
+        "domain": "skydns.local", # The domain prefix to insert services under
+        "ttl": 60, # The ttl of skydns records. Ignored if lower than etcdTTL
+      },
+      "docker": {
+        "docker": "v1.16", # The version of the doker API. Prob should be autodetected
+        "url": "http://127.0.0.1:2375", # The url of the Docker API
+      },
+      "discovery": {
+        "host": "10.77.66.0", # The host to insert records as. Default is autodetection
+        "interface": "eth0", # The interface to try and find the public host from
+      }
     }
 
-This format will probably change when I get better at writing `FromJSON`
-instances.
+These are also exposed as command line arguments: the `etcd.url` config element
+is availible as `-e` or `--etcd-url`. See `--help` for more info.
+
+TODO: Configuration from etcd? lol. Could get the skydns domain from there for sure
 
 How it works
 ------------
@@ -88,8 +97,9 @@ be configured via the `publicInterface` configuration parameter.
 
 TODO: AWS/DO/GCE metadata service
 
-If all of these fail, then HighHock will error out! Kinda shit, eh? Must do
-something about that
+If all of these fail, then HighHock will fail to start. Should the IP of the
+machine change while HighHock is running, the inserted records will not change
+IP.
 
 Internals
 =========
