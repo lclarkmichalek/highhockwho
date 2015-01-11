@@ -138,6 +138,7 @@ dockerClientOpts r = D.DockerClientOpts ver url
         url = r ^. config . dockerUrl
 
 setupLogging :: Config -> IO ()
-setupLogging _ = do
-  s <- verboseStreamHandler stderr L.DEBUG
-  L.updateGlobalLogger L.rootLoggerName (L.addHandler s . L.setLevel L.DEBUG . L.removeHandler)
+setupLogging c = do
+  s <- verboseStreamHandler stderr (c ^. logLevel)
+  L.updateGlobalLogger L.rootLoggerName
+    (L.addHandler s . L.setLevel (c ^. logLevel) . L.removeHandler)

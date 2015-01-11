@@ -6,7 +6,9 @@ import Data.Aeson.Lens
 import Control.Lens
 import Data.Char (toUpper)
 import Data.List (find)
+import Data.Maybe (listToMaybe)
 import System.IO.Unsafe (unsafePerformIO)
+import System.Log.Logger (Priority(..))
 
 data Config = Config
               { _configEtcdUrl :: !T.Text
@@ -17,13 +19,14 @@ data Config = Config
               , _configDockerUrl :: !String
               , _configPublicHost :: !(Maybe T.Text)
               , _configPublicInterface :: !String
+              , _configLogLevel :: !Priority
               } deriving (Show, Eq)
 
 makeFields ''Config
 
 defaultConfig :: Config
 defaultConfig = Config "http://127.0.0.1:4001/" 60 "skydns.local" 60 "v1.16"
-                "http://127.0.0.1:2375/" Nothing "eth0"
+                "http://127.0.0.1:2375/" Nothing "eth0" NOTICE
 
 (.?~) :: ASetter s s a a -> (Maybe a) -> s -> s
 (.?~) s (Just a) = s .~ a
@@ -50,6 +53,7 @@ jsonExtractors o =
   , dockerUrl .?~ o ^? key "docker" . key "url" . _String .to T.unpack
   , publicHost .??~ o ^? key "discovery" . key "host" . _String
   , publicInterface .?~ o ^? key "discovery" . key "interface" . _String .to T.unpack
+  , logLevel .?~ (o ^? key "logLevel" . _String .to T.unpack >>= maybeRead)
   ]
 
 fromArgs :: [String] -> Config -> Config
@@ -74,6 +78,7 @@ binHandlers =
   , ("d", "docker-url", \u -> dockerUrl .~ u)
   , ("p", "discovery-host", \h -> publicHost .~ (Just $ T.pack h))
   , ("i", "discovery-iface", \i -> publicInterface .~ i)
+  , ("l", "log-level", \l -> logLevel .~ read l)
   ]
 
 argHelp :: String
@@ -84,3 +89,6 @@ argHelp = header ++ "\n\n" ++ perArg binHandlers
         shortOpts _ = ""
         perArg ((s, l, _):xs) = "\t-" ++ s ++ "/--" ++ l ++ "\n" ++ perArg xs
         perArg _ = ""
+
+maybeRead :: Read a => String -> Maybe a
+maybeRead = fmap fst . listToMaybe . reads
