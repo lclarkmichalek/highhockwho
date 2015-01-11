@@ -12,6 +12,7 @@ import qualified Network.Docker as D
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Applicative ((<$>))
 import Control.Monad (mzero)
+import Control.Exception (catch, SomeException)
 import Runtime
 
 import System.Log.Logger
@@ -49,14 +50,23 @@ watchContainers r c = control c $ do
   yield cs
 
 getContainerDetails :: Runtime -> T.Text -> IO (Maybe A.Value)
-getContainerDetails r i = get' $ dockerClientOpts r
+getContainerDetails r i = catch (get' $ dockerClientOpts r) handler
   where get' = D.decodeResponse . D._dockerGetQuery url
         url = T.unpack ("/containers/" `T.append` i `T.append` "/json")
+        handler :: SomeException -> IO (Maybe A.Value)
+        handler e =
+          (errorM "getContainerDetails" $ "Failed to get container details: " ++ show e) >>
+          return Nothing
 
 getContainers :: Runtime -> IO [T.Text]
 getContainers r = do
   let get' = D.decodeResponse . D._dockerGetQuery "/containers/json"
-  mcs <- get' $ dockerClientOpts r
+  mcs <- catch (get' $ dockerClientOpts r) handler
   case mcs of
    Just cs -> return $ map (\(BasicContainer v) -> v) cs
    Nothing -> warningM "getContainers" "Failed to get any containers" >> return []
+  where
+    handler :: SomeException -> IO (Maybe [BasicContainer])
+    handler e =
+      (errorM "getContainers" $ "Failed to get containers: " ++ show e) >>
+      return Nothing
