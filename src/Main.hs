@@ -16,7 +16,11 @@ import Control.Concurrent (forkIO)
 
 import System.Environment (getArgs)
 import System.Log.Logger
+import Control.Lens
 
+
+makeFields ''Runtime
+makeFields ''Config
 
 defaultConfigPath :: FilePath
 defaultConfigPath = "/etc/highhock.json"
@@ -33,16 +37,9 @@ main = do
   mapM_ (\s -> installHandler s handler Nothing) [sigINT, sigTERM]
   run wc r
 
--- Microseconds
-containersTickInterval :: Int
-containersTickInterval = 1000000 * 10
-
-containerTickInterval :: Int
-containerTickInterval = 1000000 * 10
-
 run :: C.Controller -> Runtime -> IO ()
 run c r = do
-  _ <- forkIO $ C.ticker c containersTickInterval
+  _ <- forkIO $ C.ticker c (r ^. config . mainTick)
   W.watchContainers r c $$ registerContainers r
 
 registerContainers :: Runtime -> Sink [T.Text] IO ()
@@ -59,7 +56,7 @@ registerContainers run = reg' run R.newRegistry
 
 startContainerWatcher :: Runtime -> T.Text -> C.Controller -> IO ()
 startContainerWatcher r i c = do
-  _ <- forkIO $ C.ticker c containerTickInterval
+  _ <- forkIO $ C.ticker c (r ^. config . containerTick)
   watcher $$ extractor =$ inserter
   where watcher = W.watchContainer c r i
         extractor = E.envVarExtract r

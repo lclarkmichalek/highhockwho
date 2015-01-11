@@ -20,13 +20,15 @@ data Config = Config
               , _configPublicHost :: !(Maybe T.Text)
               , _configPublicInterface :: !String
               , _configLogLevel :: !Priority
+              , _configMainTick :: !Int
+              , _configContainerTick :: !Int
               } deriving (Show, Eq)
 
 makeFields ''Config
 
 defaultConfig :: Config
 defaultConfig = Config "http://127.0.0.1:4001/" 60 "skydns.local" 60 "v1.16"
-                "http://127.0.0.1:2375/" Nothing "eth0" NOTICE
+                "http://127.0.0.1:2375/" Nothing "eth0" NOTICE 10 10
 
 (.?~) :: ASetter s s a a -> (Maybe a) -> s -> s
 (.?~) s (Just a) = s .~ a
@@ -51,6 +53,8 @@ jsonExtractors o =
   , skydnsTTL .?~ o ^? key "skydns" . key "ttl" . _Integral
   , dockerVersion .?~ o ^? key "docker" . key "version" . _String .to T.unpack
   , dockerUrl .?~ o ^? key "docker" . key "url" . _String .to T.unpack
+  , mainTick .?~ o ^? key "docker" . key "poll" . _Integral
+  , containerTick .?~ o ^? key "docker" . key "pollContainer" . _Integral
   , publicHost .??~ o ^? key "discovery" . key "host" . _String
   , publicInterface .?~ o ^? key "discovery" . key "interface" . _String .to T.unpack
   , logLevel .?~ (o ^? key "logLevel" . _String .to T.unpack >>= maybeRead)
@@ -76,6 +80,8 @@ binHandlers =
   , ("st", "skydns-ttl", \t -> skydnsTTL .~ read t)
   , ("dv", "docker-version", \v -> dockerVersion .~ v)
   , ("d", "docker-url", \u -> dockerUrl .~ u)
+  , ("p", "docker-poll", \v -> mainTick .~ read v)
+  , ("cp", "docker-poll-container", \v -> containerTick .~ read v)
   , ("p", "discovery-host", \h -> publicHost .~ (Just $ T.pack h))
   , ("i", "discovery-iface", \i -> publicInterface .~ i)
   , ("l", "log-level", \l -> logLevel .~ read l)

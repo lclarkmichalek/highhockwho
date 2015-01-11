@@ -37,4 +37,4 @@ wait (Controller c) = atomically $ STM.takeTMVar c
 ticker :: Controller -> Int -> IO ()
 ticker c i =
   trigger c >>= \s ->
-  when s $ threadDelay i >> ticker c i
+  when s $ threadDelay (i * 10 ^ 6) >> ticker c i
