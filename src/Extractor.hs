@@ -113,15 +113,20 @@ hostFromConfig = publicHost
 hostFromEnvVar :: Config -> IO (Maybe T.Text)
 hostFromEnvVar _ = fmap (fmap (T.pack . snd) . find ((==) "EXTERNAL_IP" . fst)) getEnvironment
 
+-- | The interface to look up ip on if no interface configured
+defaultNetworkInterface :: String
+defaultNetworkInterface = "eth0"
+
 hostFromNetworkInterface :: Config -> IO (Maybe T.Text)
 hostFromNetworkInterface c =
-  case publicInterface c of
-   Nothing -> return Nothing
-   Just iname -> do
-     entries <- N.getNetworkEntries True
-     case find (elem iname . allNetworkNames) entries of
-      Just n -> fmap Just $ getNetworkAddr n
-      Nothing -> return Nothing
+  let ifame = case publicInterface c of
+        Nothing -> defaultNetworkInterface
+        Just name -> name
+  in do
+    entries <- N.getNetworkEntries True
+    case find (elem ifame . allNetworkNames) entries of
+     Just n -> fmap Just $ getNetworkAddr n
+     Nothing -> return Nothing
 
 allNetworkNames :: N.NetworkEntry -> [N.NetworkName]
 allNetworkNames ne = N.networkName ne : N.networkAliases ne
