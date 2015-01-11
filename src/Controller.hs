@@ -10,6 +10,7 @@ import Control.Monad (void, when)
 import qualified Control.Concurrent.STM.TMVar as STM
 import Control.Monad.STM (atomically)
 import Control.Concurrent (threadDelay)
+import Data.Maybe (fromMaybe)
 
 data Controller = Controller (STM.TMVar Bool)
 
@@ -17,15 +18,17 @@ newController :: IO Controller
 newController = atomically $ fmap Controller STM.newEmptyTMVar
 
 stop :: Controller -> IO ()
-stop (Controller c) = void $ atomically $ STM.swapTMVar c False
+stop (Controller c) = void $ atomically $ do
+  void $ STM.tryTakeTMVar c
+  STM.putTMVar c False
 
 -- | Returns False if the controller has been stopped
 trigger :: Controller -> IO Bool
 trigger (Controller c) = atomically $ do
   v <- STM.tryTakeTMVar c
-  case v of
-   Just v' -> return v'
-   Nothing -> STM.putTMVar c True >> return True
+  let v' = fromMaybe True v
+  STM.putTMVar c v'
+  return v'
 
 -- | Returns False if the controller has been 'stopped'
 wait :: Controller -> IO Bool
