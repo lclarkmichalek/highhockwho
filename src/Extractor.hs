@@ -27,41 +27,54 @@ makeLenses ''Domain
 envVar :: T.Text
 envVar = "DISCOVER"
 
+-- This function is MUCH bigger than it should be! Christ, I feel terrible about
+-- this
 envVarExtract :: Config -> Conduit A.Value IO Domain
 envVarExtract c = do
   mHost <- liftIO $ getPublicHost c
   liftIO $ infoM "envVarExtract" $ "Host " ++ show mHost
   case mHost of
-   Just h -> awaitForever $ \obj ->
-     mapM_ (\(n, p) -> yield $ domain h n p) .
-       mapMaybe portToInt .
-       (\v -> trace (show v) v) .
-       mapMaybe (getExternalPort obj) .
-       (\v -> trace (show v) v) .
-       concat . map getInternalPorts .
-       filter isDiscover $ vars obj
+   Just h -> awaitForever $ \obj -> let
+
+     -- Find all the vars named DISCOVER
+     isDiscover v = envVar `T.append` "=" `T.isInfixOf` v
+     discoverVars = filter isDiscover $ envVars obj
+
+     -- Get all of the (name, internal port) entries in the DISCOVER var(s)
+     getInternalPort v = case T.split (== ':') v of
+       [val, sPort] -> if all isDigit (T.unpack sPort)
+                       then Just (val, sPort)
+                       else Nothing
+       _ -> Nothing
+     getInternalPorts dv = mapMaybe getInternalPort entries
+       where entries = T.split (== ',') . T.drop (1 + T.length envVar) $ dv
+     internalPorts = concat $ map getInternalPorts discoverVars
+
+     -- Get all the (name, external port)s
+     externalPorts = mapMaybe (getExternalPort obj) internalPorts
+
+     -- Convert the external port to a string
+     portToInt :: (T.Text, T.Text) -> Maybe (T.Text, Int)
+     portToInt (v, p) = fmap (\p' -> (v, p')) (eitherToMaybe $ fst <$> decimal p)
+     eitherToMaybe :: Either a b -> Maybe b
+     eitherToMaybe (Right a) = Just a
+     eitherToMaybe _ = Nothing
+     externalPorts' = mapMaybe portToInt externalPorts
+
+     -- Create the Domain objects
+     domain n p = path .~ etcdPath c n $
+                  host .~ h $
+                  port .~ p $
+                  defaultDomain c
+     domains = map (uncurry domain) externalPorts'
+     in do
+       liftIO $ infoM "envVarExtract" $ show discoverVars ++ " -> " ++ show domains
+       mapM_ yield domains
    Nothing -> error "Could not find host"
-  where vars obj = obj ^.. key "Config" . key "Env" . values . _String
-        isDiscover v = case T.split (== '=') v of
-          x:_ -> x == envVar
-          _ -> False
-        getInternalPort v = case T.split (== ':') v of
-          [val, sPort] -> if all isDigit (T.unpack sPort)
-                          then Just (val, sPort)
-                          else Nothing
-          _ -> Nothing
-        getInternalPorts :: T.Text -> [(T.Text, T.Text)]
-        getInternalPorts dv = mapMaybe getInternalPort entries
-          where entries = T.split (== ',') . T.drop (1 + T.length envVar) $ dv
-        portToInt :: (T.Text, T.Text) -> Maybe (T.Text, Int)
-        portToInt (h, p) = fmap (\p' -> (h, p')) (eitherToMaybe $ fst <$> decimal p)
-        eitherToMaybe :: Either a b -> Maybe b
-        eitherToMaybe (Right a) = Just a
-        eitherToMaybe _ = Nothing
-        domain h n p = path .~ etcdPath c n $
-                       host .~ h $
-                       port .~ p $
-                       defaultDomain c
+
+-- Had to ask for help on #haskell with this, thank you based irc
+envVars :: A.Value -> [T.Text]
+envVars o = o ^.. key "Config" . key "Env" . values . _String
 
 -- | Given the Docker inspect return value, and a (_, internal port) pair,
 -- return a (_, external port) pair, where possible. Prefers tcp (because
