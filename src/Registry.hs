@@ -3,13 +3,11 @@ module Registry (
   removeMissingContainers, insertMissingContainers,
   ) where
 
-import Data.Conduit
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Control.Concurrent as CC
 
 import qualified Controller as C
-import Config
 
 import Control.Monad (foldM)
 

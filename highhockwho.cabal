@@ -19,7 +19,7 @@ cabal-version:       >=1.10
 executable highhockwho
   main-is:             Main.hs
   ghc-options:         -Wall
-  default-extensions:  OverloadedStrings, TemplateHaskell
+  default-extensions:  OverloadedStrings, TemplateHaskell, MultiParamTypeClasses, FunctionalDependencies, TypeSynonymInstances, FlexibleInstances
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8,

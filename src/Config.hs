@@ -1,22 +1,19 @@
-{-# LANGUAGE DeriveGeneric #-}
-module Config where
+module Config(Config(..)) where
 
 import Control.Monad (mzero)
 import Control.Applicative ((<*>), (<$>))
 import qualified Data.Text as T
 import Data.Aeson
 
-import qualified Network.Docker.Types as D
-
 data Config = Config
-              { etcdUrl :: !T.Text
-              , etcdTTL :: !Int
-              , skydnsDomain :: !T.Text
-              , skydnsTTL :: !Int
-              , dockerVersion :: !String
-              , dockerUrl :: !String
-              , publicHost :: !(Maybe T.Text)
-              , publicInterface :: !(Maybe String)
+              { _configEtcdUrl :: !T.Text
+              , _configEtcdTTL :: !Int
+              , _configSkydnsDomain :: !T.Text
+              , _configSkydnsTTL :: !Int
+              , _configDockerVersion :: !String
+              , _configDockerUrl :: !String
+              , _configPublicHost :: !(Maybe T.Text)
+              , _configPublicInterface :: !(Maybe String)
               } deriving (Show, Eq)
 
 instance FromJSON Config where
@@ -31,6 +28,3 @@ instance FromJSON Config where
     v .:? "publicHost" <*>
     v .:? "publicInterface"
   parseJSON _ = mzero
-
-dockerClientOpts :: Config -> D.DockerClientOpts
-dockerClientOpts c = D.DockerClientOpts (dockerVersion c) (dockerUrl c)
