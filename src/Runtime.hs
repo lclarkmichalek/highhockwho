@@ -16,7 +16,7 @@ import Data.Aeson (eitherDecode, object)
 import Data.List (find)
 import Data.Maybe (fromMaybe)
 import System.Environment (getEnvironment)
-import System.Exit (exitSuccess)
+import System.Exit (exitSuccess, exitFailure)
 import Control.Concurrent.Async (async, wait, Async)
 import Network.Socket (inet_ntoa)
 import System.IO (stderr)
@@ -46,6 +46,8 @@ createRuntime args = do
   when ("-h" `elem` args || "--help" `elem` args) $
     putStrLn argHelp >> exitSuccess
 
+  setupLogging defaultConfig
+
   cfg <- loadConfig args
   setupLogging cfg
 
@@ -60,7 +62,7 @@ createRuntime args = do
 
 must :: Maybe a -> String -> IO a
 must (Just a) _ = return a
-must _ err = fail err
+must _ err = L.criticalM "runtime" err >> exitFailure
 
 loadConfig :: [String] -> IO Config
 loadConfig args = do
