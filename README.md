@@ -22,6 +22,8 @@ HighHock takes a single configuration file, which can be passed via the
       "docker": {
         "docker": "v1.16", # The version of the doker API. Prob should be autodetected
         "url": "http://127.0.0.1:2375", # The url of the Docker API
+        "poll": 10, # Interval at which to poll for list of running containers
+        "pollContainer": 10, # Interval at which to poll for container status
       },
       "discovery": {
         "host": "10.77.66.0", # The host to insert records as. Default is autodetection
