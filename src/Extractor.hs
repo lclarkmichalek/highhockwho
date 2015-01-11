@@ -63,9 +63,10 @@ envVarExtract c = do
                        host .~ h $
                        port .~ p $
                        defaultDomain c
-{- asd
 
--}
+-- | Given the Docker inspect return value, and a (_, internal port) pair,
+-- return a (_, external port) pair, where possible. Prefers tcp (because
+-- docker's udp is fucked by its nat shit anyway)
 getExternalPort :: A.Value -> (T.Text, T.Text) -> Maybe (T.Text, T.Text)
 getExternalPort obj (n, p) = do
   pEntry <- tcpPort <|> udpPort
@@ -87,6 +88,7 @@ etcdPath :: Config -> T.Text -> T.Text
 etcdPath c d = T.intercalate "/" (skydnsPrefix : pth)
   where pth = filter (/= "") . reverse $ (d : T.split (== '.') (skydnsDomain c))
 
+-- | Tries each of the hostGettingMethods in turn,
 getPublicHost :: Config -> IO (Maybe T.Text)
 getPublicHost c = f' =<< (mapM (\f -> async $ f c) hostGettingMethods)
   where f' :: [Async (Maybe T.Text)] -> IO (Maybe T.Text)
