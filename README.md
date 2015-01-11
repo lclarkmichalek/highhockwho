@@ -27,6 +27,7 @@ HighHock takes a single configuration file, which can be passed via the
         "host": "10.77.66.0", # The host to insert records as. Default is autodetection
         "interface": "eth0", # The interface to try and find the public host from
       }
+      "logLevel": "NOICE", # INFO, NOTICE, WARNING, you know the drill (see System.Log.Logger)
     }
 
 These are also exposed as command line arguments: the `etcd.url` config element
