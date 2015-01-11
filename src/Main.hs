@@ -29,7 +29,7 @@ main = do
   infoM "main" "Starting main watcher"
 
   wc <- C.newController
-  let handler = Catch $ C.stop wc
+  let handler = Catch $ infoM "main" "stopping main controller" >> C.stop wc
   mapM_ (\s -> installHandler s handler Nothing) [sigINT, sigTERM]
   run wc r
 
