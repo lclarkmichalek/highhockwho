@@ -49,6 +49,13 @@ registryTests = do
       s' <- C.isStopped $ reg' M.! "id"
       s' `shouldBe` False
 
+    it "will handle exceptions in the action" $ do
+      let act _ = (threadDelay $ 10 ^ 2) >>= fail "foo"
+      reg <- insertContainer newRegistry act "id"
+      threadDelay $ 10 ^ 4
+      s <- C.isStopped $ reg M.! "id"
+      s `shouldBe` True
+
   describe "Registry.removeContainer" $ do
     it "will ignore missing entries" $ do
       reg <- insertContainer newRegistry sleep "id"
