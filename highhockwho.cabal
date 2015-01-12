@@ -55,6 +55,6 @@ test-suite unit-tests
   build-depends:       base >=4.7 && <4.8,
                        hspec >= 2.0,
                        highhockwho,
-                       mtl, conduit, aeson, bytestring, text, docker, etcd, transformers, lens, unordered-containers, async, network, containers, unix, wreq, hslogger, vector, stm
+                       mtl, conduit, aeson, bytestring, text, docker, etcd, transformers, lens, unordered-containers, async, network, containers, unix, wreq, hslogger, vector, stm, random
   hs-source-dirs:      tests
   default-language:    Haskell2010

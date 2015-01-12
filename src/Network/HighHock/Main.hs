@@ -16,6 +16,8 @@ import Control.Monad (foldM)
 import System.Posix.Signals (installHandler, Handler(Catch), sigINT, sigTERM)
 import Control.Concurrent (forkIO)
 import System.Environment (getArgs)
+import System.Random (randomRIO)
+import Control.Concurrent (threadDelay)
 
 import System.Log.Logger
 import Control.Lens
@@ -61,6 +63,8 @@ registerContainers run = reg' run R.newRegistry
 
 startContainerWatcher :: Runtime -> T.Text -> C.Controller -> IO ()
 startContainerWatcher r i c = do
+  -- Sleep a random amount of time to avoid thundering herd
+  randomRIO (0, r ^. config . containerTick) >>= threadDelay
   _ <- forkIO $ C.ticker c (r ^. config . containerTick)
   watcher $$ extractor =$ inserter
   where watcher = W.watchContainer c r i
