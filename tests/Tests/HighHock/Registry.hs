@@ -77,3 +77,29 @@ registryTests = do
       reg <- mkReg ["asd", "bsd"]
       reg' <- insertMissingContainers reg (\_ _ -> threadDelay $ 10 ^ 6) ["asd", "nsd"]
       M.keys reg' `shouldMatchList` ["asd", "bsd", "nsd"]
+
+  describe "Registry.removeStoppedContainers" $ do
+    it "will remove naturally containers" $ do
+      let act _ = threadDelay $ 10 ^ 2
+      reg <- insertContainer newRegistry act "id"
+      threadDelay $ 10 ^ 4
+      r' <- removeStoppedContainers reg
+      M.keys r' `shouldMatchList` []
+
+    it "will remove containers with stopped controllers" $ do
+      reg <- mkReg ["asd"]
+      C.stop $ reg M.! "asd"
+      r' <- removeStoppedContainers reg
+      M.keys r' `shouldMatchList` []
+
+    it "will not remove live containers" $ do
+      reg <- mkReg ["asd"]
+      r' <- removeStoppedContainers reg
+      M.keys r' `shouldMatchList` ["asd"]
+
+    it "will remove thrown containers" $ do
+      let act _ = (threadDelay $ 10 ^ 2) >>= fail "foo"
+      reg <- insertContainer newRegistry act "id"
+      threadDelay $ 10 ^ 4
+      r' <- removeStoppedContainers reg
+      M.keys r' `shouldMatchList` []

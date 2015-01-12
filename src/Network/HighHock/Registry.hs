@@ -6,6 +6,7 @@ module Network.HighHock.Registry
        , removeContainer
        , removeMissingContainers
        , insertMissingContainers
+       , removeStoppedContainers
        ) where
 
 import qualified Data.Map.Strict as M
@@ -59,8 +60,8 @@ insertMissingContainers r fact ids = foldM insert r missing
 
 -- | Check the controller of each entry, and remove if stopped (any thread that
 -- finish will be stopped, due to our finally wrapper in the forkIO)
-removeFinishedContainers :: Registry -> IO Registry
-removeFinishedContainers r = dead >>= foldM removeContainer r
+removeStoppedContainers :: Registry -> IO Registry
+removeStoppedContainers r = dead >>= foldM removeContainer r
   where dead = M.foldlWithKey acc (return []) r
         acc :: IO [T.Text] -> T.Text -> C.Controller -> IO [T.Text]
         acc v id c = do
