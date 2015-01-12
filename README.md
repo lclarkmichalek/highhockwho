@@ -1,6 +1,8 @@
 HighHockWho!
 ============
 
+[![Circle CI](https://circleci.com/gh/bluepeppers/highhockwho.svg?style=svg)](https://circleci.com/gh/bluepeppers/highhockwho)
+
 A skydns2 compatible Docker watcher and etcd inserter! Written in Haskell!
 
 Configuration
