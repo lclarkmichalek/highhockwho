@@ -33,25 +33,21 @@ registryTests = do
     it "will run the given action" $ do
       let act c = (threadDelay $ 10 ^ 5) >> C.stop c
       reg <- insertContainer newRegistry act "id"
-      a <- A.async $ C.wait (fst $ reg M.! "id")
+      a <- A.async $ C.wait (reg M.! "id")
       threadDelay $ 10 ^ 4
       r <- A.poll a
       r `shouldBe` Nothing
       threadDelay $ 10 ^ 5
       r' <- A.poll a
       r' `shouldBe` Just (Right False)
-      killThread . snd $ reg M.! "id"
-
-    it "will overwrite existing entries" $ do
-      reg <- insertContainer newRegistry sleep "id"
-      reg' <- insertContainer reg sleep "id"
-      snd (reg' M.! "id") `shouldSatisfy` (/= snd (reg M.! "id"))
 
     it "will stop overwritten entries" $ do
       reg <- insertContainer newRegistry sleep "id"
-      void $ insertContainer reg sleep "id"
-      s <- C.wait . fst $ reg M.! "id"
-      s `shouldBe` False
+      reg' <- insertContainer reg sleep "id"
+      s <- C.isStopped $ reg M.! "id"
+      s `shouldBe` True
+      s' <- C.isStopped $ reg' M.! "id"
+      s' `shouldBe` False
 
   describe "removeContainer" $ do
     it "will ignore missing entries" $ do
@@ -67,8 +63,8 @@ registryTests = do
     it "will stop removed entries" $ do
       reg <- insertContainer newRegistry sleep "id"
       void $ removeContainer reg "id"
-      s <- C.wait . fst $ reg M.! "id"
-      s `shouldBe` False
+      s <- C.isStopped $ reg M.! "id"
+      s `shouldBe` True
 
   describe "removeMissingContainers" $ do
     it "will remove missing containers" $ do

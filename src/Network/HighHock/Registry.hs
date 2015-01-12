@@ -14,18 +14,19 @@ import qualified Control.Concurrent as CC
 
 import qualified Network.HighHock.Controller as C
 
-import Control.Monad (foldM)
+import Control.Monad (foldM, void)
+import Control.Exception (finally)
 
 import System.Log.Logger
 
-type Registry = M.Map T.Text (C.Controller, CC.ThreadId)
+type Registry = M.Map T.Text C.Controller
 
 newRegistry :: Registry
 newRegistry = M.empty
 
 applyContainer :: (C.Controller -> IO a) -> Registry -> T.Text -> IO (Maybe a)
 applyContainer f r id = case M.lookup id r of
-  Just (c, _) -> fmap Just $ f c
+  Just c -> fmap Just $ f c
   Nothing -> return Nothing
 
 -- | Inserts a new container to be watched. If there is already an entry for the
@@ -34,14 +35,14 @@ insertContainer :: Registry -> (C.Controller -> IO ()) -> T.Text -> IO Registry
 insertContainer r act id = do
   c <- C.newController
   applyContainer C.stop r id
-  tid <- CC.forkIO $ act c
+  void $ CC.forkIO $ finally (act c) (C.stop c)
   infoM "insertContainer" ("Inserting " ++ T.unpack id)
-  return $ M.insert id (c, tid) r
+  return $ M.insert id c r
 
 removeContainer :: Registry -> T.Text -> IO Registry
 removeContainer r id = do
   applyContainer C.stop r id
-  infoM "removeContainer" ("Removeing " ++ T.unpack id)
+  infoM "removeContainer" ("Removing " ++ T.unpack id)
   return $ M.delete id r
 
 -- | Remove containers that are missing from the list of ids given. Stop also
