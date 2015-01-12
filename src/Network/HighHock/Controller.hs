@@ -32,7 +32,10 @@ trigger (Controller c) = atomically $ do
 
 -- | Returns False if the controller has been 'stopped'
 wait :: Controller -> IO Bool
-wait (Controller c) = atomically $ STM.takeTMVar c
+wait (Controller c) = atomically $ do
+  v <- STM.takeTMVar c
+  when (not v) $ STM.putTMVar c v
+  return v
 
 ticker :: Controller -> Int -> IO ()
 ticker c i =

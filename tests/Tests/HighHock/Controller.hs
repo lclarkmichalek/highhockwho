@@ -28,3 +28,12 @@ controllerTests = do
       forM_ asyncs $ \a -> do
         state <- poll a
         state `shouldSatisfy` isJust
+
+  describe "Controller.trigger" $ do
+    it "does not trigger a stopped controller" $ do
+      c <- newController
+      stop c
+      t <- trigger c
+      t `shouldBe` False
+      r <- wait c
+      r `shouldBe` False
