@@ -24,7 +24,7 @@ mkReg (x:xs) = do
 mkReg [] = return newRegistry
 
 registryTests = do
-  describe "insertContainer" $ do
+  describe "Registry.insertContainer" $ do
     it "will add a missing container" $ do
       reg <- insertContainer newRegistry sleep "id"
       M.lookup "id" reg `shouldSatisfy` isJust
@@ -49,7 +49,7 @@ registryTests = do
       s' <- C.isStopped $ reg' M.! "id"
       s' `shouldBe` False
 
-  describe "removeContainer" $ do
+  describe "Registry.removeContainer" $ do
     it "will ignore missing entries" $ do
       reg <- insertContainer newRegistry sleep "id"
       r' <- removeContainer reg "asd"
@@ -66,13 +66,13 @@ registryTests = do
       s <- C.isStopped $ reg M.! "id"
       s `shouldBe` True
 
-  describe "removeMissingContainers" $ do
+  describe "Registry.removeMissingContainers" $ do
     it "will remove missing containers" $ do
       reg <- mkReg ["asd", "bsd"]
       reg' <- removeMissingContainers reg ["asd", "nsd"]
       M.keys reg' `shouldBe` ["asd"]
 
-  describe "insertMissingContainers" $ do
+  describe "Registry.insertMissingContainers" $ do
     it "will add missing containers" $ do
       reg <- mkReg ["asd", "bsd"]
       reg' <- insertMissingContainers reg (\_ _ -> threadDelay $ 10 ^ 6) ["asd", "nsd"]

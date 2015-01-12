@@ -56,3 +56,16 @@ insertMissingContainers :: Registry -> (T.Text -> C.Controller -> IO ()) ->
 insertMissingContainers r fact ids = foldM insert r missing
   where missing = filter (`notElem` M.keys r) ids
         insert r' i = insertContainer r' (fact i) i
+
+-- | Check the controller of each entry, and remove if stopped (any thread that
+-- finish will be stopped, due to our finally wrapper in the forkIO)
+removeFinishedContainers :: Registry -> IO Registry
+removeFinishedContainers r = dead >>= foldM removeContainer r
+  where dead = M.foldlWithKey acc (return []) r
+        acc :: IO [T.Text] -> T.Text -> C.Controller -> IO [T.Text]
+        acc v id c = do
+          v' <- v
+          s <- C.isStopped c
+          if s
+            then return (id:v')
+            else return v'
