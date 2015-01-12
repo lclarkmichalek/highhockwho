@@ -78,6 +78,47 @@ controllerTests = do
       r' <- A.poll b
       r' `shouldBe` Just (Right False)
 
+  describe "Controller.isStopped" $ do
+    it "returns False on empty or triggered controllers" $ do
+      c <- newController
+      s <- isStopped c
+      s `shouldBe` False
+      void $ isStopped c
+      s' <- isStopped c
+      s' `shouldBe` False
+
+    it "returns True on stopped controllers" $ do
+      c <- newController
+      stop c
+      s <- isStopped c
+      s `shouldBe` True
+
+    it "persists a trigger" $ do
+      c <- newController
+      void $ trigger c
+      void $ isStopped c
+      a <- A.async $ wait c
+      threadDelay timeout
+      r <- A.poll a
+      r `shouldBe` Just (Right True)
+
+    it "persists a stop" $ do
+      c <- newController
+      stop c
+      void $ isStopped c
+      a <- A.async $ wait c
+      threadDelay timeout
+      r <- A.poll a
+      r `shouldBe` Just (Right False)
+
+    it "persists an empty" $ do
+      c <- newController
+      void $ isStopped c
+      a <- A.async $ wait c
+      threadDelay timeout
+      r <- A.poll a
+      r `shouldBe` Nothing
+
   describe "Controller.ticker" $ do
     it "stops on a stop" $ do
       c <- newController

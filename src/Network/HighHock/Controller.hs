@@ -4,6 +4,7 @@ module Network.HighHock.Controller (
   stop,
   trigger,
   wait,
+  isStopped,
   ticker) where
 
 import Control.Monad (void, when)
@@ -36,6 +37,15 @@ wait (Controller c) = atomically $ do
   v <- STM.takeTMVar c
   when (not v) $ STM.putTMVar c v
   return v
+
+-- | Doesn't block
+isStopped :: Controller -> IO Bool
+isStopped (Controller c) = atomically $ do
+  v <- STM.tryTakeTMVar c
+  case v of
+   Just v' -> STM.putTMVar c v'
+   _ -> return ()
+  return $ v == Just False
 
 ticker :: Controller -> Int -> IO ()
 ticker c i =
