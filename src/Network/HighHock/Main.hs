@@ -11,10 +11,12 @@ import Data.Conduit
 import qualified Data.Text as T
 
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad (foldM)
+
 import System.Posix.Signals (installHandler, Handler(Catch), sigINT, sigTERM)
 import Control.Concurrent (forkIO)
-
 import System.Environment (getArgs)
+
 import System.Log.Logger
 import Control.Lens
 
@@ -50,9 +52,12 @@ registerContainers run = reg' run R.newRegistry
           case ids of
            Nothing -> return ()
            Just ids' -> do
-             r' <- liftIO $ R.removeMissingContainers r ids'
-             r'' <- liftIO $ R.insertMissingContainers r' (startContainerWatcher run) ids'
-             reg' run r''
+             r' <- foldM (\r f -> liftIO $ f r) r
+                   [ R.removeStoppedContainers
+                   , R.removeMissingContainers ids'
+                   , R.insertMissingContainers (startContainerWatcher run) ids'
+                   ]
+             reg' run r'
 
 startContainerWatcher :: Runtime -> T.Text -> C.Controller -> IO ()
 startContainerWatcher r i c = do
