@@ -4,12 +4,10 @@ import Test.Hspec
 import Control.Monad (void, forM, forM_)
 import qualified Control.Concurrent.Async as A
 import Control.Concurrent (threadDelay)
-import Control.Exception (SomeException)
 
 import Network.HighHock.Controller
 
-instance Eq SomeException where
-  (==) a b = show a == show b
+import Tests.HighHock.Inst ()
 
 controllerStates :: IO [Controller]
 controllerStates = do
