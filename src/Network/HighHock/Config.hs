@@ -58,8 +58,8 @@ jsonExtractors o =
   , skydnsTTL .?~ o ^? key "skydns" . key "ttl" . _Integral
   , dockerVersion .?~ o ^? key "docker" . key "version" . _String .to T.unpack
   , dockerUrl .?~ o ^? key "docker" . key "url" . _String .to T.unpack
-  , mainTick .?~ o ^? key "docker" . key "poll" . _Integral
-  , containerTick .?~ o ^? key "docker" . key "pollContainer" . _Integral
+  , mainTick .?~ o ^? key "docker" . key "poll" . _Integral .to (* 10^6)
+  , containerTick .?~ o ^? key "docker" . key "pollContainer" . _Integral .to (* 10^6)
   , publicHost .??~ o ^? key "discovery" . key "host" . _String
   , publicInterface .?~ o ^? key "discovery" . key "interface" . _String .to T.unpack
   , logLevel .?~ (o ^? key "logLevel" . _String .to T.unpack >>= maybeRead)
@@ -85,8 +85,8 @@ binHandlers =
   , ("st", "skydns-ttl", \t -> skydnsTTL .~ read t)
   , ("dv", "docker-version", \v -> dockerVersion .~ v)
   , ("d", "docker-url", \u -> dockerUrl .~ u)
-  , ("p", "docker-poll", \v -> mainTick .~ read v)
-  , ("cp", "docker-poll-container", \v -> containerTick .~ read v)
+  , ("p", "docker-poll", \v -> mainTick .~ (read v * 10 ^ 6))
+  , ("cp", "docker-poll-container", \v -> containerTick .~ (read v * 10 ^ 6))
   , ("p", "discovery-host", \h -> publicHost .~ (Just $ T.pack h))
   , ("i", "discovery-iface", \i -> publicInterface .~ i)
   , ("l", "log-level", \l -> logLevel .~ read l)
