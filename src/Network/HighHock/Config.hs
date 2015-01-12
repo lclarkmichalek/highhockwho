@@ -20,10 +20,10 @@ data Config = Config
               , _configEtcdTTL :: !Int
               , _configSkydnsDomain :: !T.Text
               , _configSkydnsTTL :: !Int
-              , _configDockerVersion :: !String
-              , _configDockerUrl :: !String
+              , _configDockerVersion :: !T.Text
+              , _configDockerUrl :: !T.Text
               , _configPublicHost :: !(Maybe T.Text)
-              , _configPublicInterface :: !String
+              , _configPublicInterface :: !T.Text
               , _configLogLevel :: !Priority
               , _configMainTick :: !Int
               , _configContainerTick :: !Int
@@ -56,12 +56,12 @@ jsonExtractors o =
   , etcdTTL .?~ o ^? key "etcd" . key "ttl" . _Integral
   , skydnsDomain .?~ o ^? key "skdns" . key "domain" . _String
   , skydnsTTL .?~ o ^? key "skydns" . key "ttl" . _Integral
-  , dockerVersion .?~ o ^? key "docker" . key "version" . _String .to T.unpack
-  , dockerUrl .?~ o ^? key "docker" . key "url" . _String .to T.unpack
+  , dockerVersion .?~ o ^? key "docker" . key "version" . _String
+  , dockerUrl .?~ o ^? key "docker" . key "url" . _String
   , mainTick .?~ o ^? key "docker" . key "poll" . _Integral .to (* 10^6)
   , containerTick .?~ o ^? key "docker" . key "pollContainer" . _Integral .to (* 10^6)
   , publicHost .??~ o ^? key "discovery" . key "host" . _String
-  , publicInterface .?~ o ^? key "discovery" . key "interface" . _String .to T.unpack
+  , publicInterface .?~ o ^? key "discovery" . key "interface" . _String
   , logLevel .?~ (o ^? key "logLevel" . _String .to T.unpack >>= maybeRead)
   ]
 
@@ -83,12 +83,12 @@ binHandlers =
   , ("ttl", "etcd-ttl", \ttl -> etcdTTL .~ read ttl)
   , ("sd", "skydns-domain", \d -> skydnsDomain .~ T.pack d)
   , ("st", "skydns-ttl", \t -> skydnsTTL .~ read t)
-  , ("dv", "docker-version", \v -> dockerVersion .~ v)
-  , ("d", "docker-url", \u -> dockerUrl .~ u)
+  , ("dv", "docker-version", \v -> dockerVersion .~ T.pack v)
+  , ("d", "docker-url", \u -> dockerUrl .~ T.pack u)
   , ("p", "docker-poll", \v -> mainTick .~ (read v * 10 ^ 6))
   , ("cp", "docker-poll-container", \v -> containerTick .~ (read v * 10 ^ 6))
   , ("p", "discovery-host", \h -> publicHost .~ (Just $ T.pack h))
-  , ("i", "discovery-iface", \i -> publicInterface .~ i)
+  , ("i", "discovery-iface", \i -> publicInterface .~ T.pack i)
   , ("l", "log-level", \l -> logLevel .~ read l)
   ]
 

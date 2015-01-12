@@ -90,7 +90,7 @@ findCfgPath _ = Nothing
 
 -- TODO: Don't have access to the docker lib docs atm
 findDockerVersion :: Config -> IO (Maybe T.Text)
-findDockerVersion cfg = return . Just . T.pack $ cfg ^. dockerVersion
+findDockerVersion cfg = return $ cfg ^. dockerVersion .to Just
 
 -- | Tries each of the hostGettingMethods in turn,
 findPublicHost :: Config -> IO (Maybe T.Text)
@@ -121,7 +121,7 @@ hostFromNetworkInterface :: Config -> IO (Maybe T.Text)
 hostFromNetworkInterface c = do
   entries <- N.getNetworkEntries True
   liftIO $ L.infoM "hostFromNetworkInterface" $ "Networks: " ++ show entries
-  case find (elem (c ^. publicInterface) . allNetworkNames) entries of
+  case find (elem (c ^. publicInterface .to T.unpack) . allNetworkNames) entries of
    Just n -> fmap Just $ getNetworkAddr n
    Nothing -> return Nothing
 
@@ -136,8 +136,8 @@ getNetworkAddr = fmap T.pack . inet_ntoa . fromIntegral . N.networkAddress
 
 dockerClientOpts :: Runtime -> D.DockerClientOpts
 dockerClientOpts r = D.DockerClientOpts ver url
-  where ver = T.unpack $ r ^. dockerVersion
-        url = r ^. config . dockerUrl
+  where ver = r ^. dockerVersion .to T.unpack
+        url = r ^. config . dockerUrl .to T.unpack
 
 setupLogging :: Config -> IO ()
 setupLogging c = do
