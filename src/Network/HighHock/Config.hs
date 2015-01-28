@@ -54,7 +54,7 @@ jsonExtractors :: Value -> [Config -> Config]
 jsonExtractors o =
   [ etcdUrl .?~ o ^? key "etcd" . key "url" . _String
   , etcdTTL .?~ o ^? key "etcd" . key "ttl" . _Integral
-  , skydnsDomain .?~ o ^? key "skdns" . key "domain" . _String
+  , skydnsDomain .?~ o ^? key "skydns" . key "domain" . _String
   , skydnsTTL .?~ o ^? key "skydns" . key "ttl" . _Integral
   , dockerVersion .?~ o ^? key "docker" . key "version" . _String
   , dockerUrl .?~ o ^? key "docker" . key "url" . _String
