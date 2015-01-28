@@ -22,7 +22,7 @@ HighHock takes a single configuration file, which can be passed via the
         "ttl": 60, # The ttl of skydns records. Ignored if lower than etcdTTL
       },
       "docker": {
-        "docker": "v1.16", # The version of the doker API. Prob should be autodetected
+        "version": "v1.16", # The version of the doker API. Prob should be autodetected
         "url": "http://127.0.0.1:2375", # The url of the Docker API
         "poll": 10, # Interval at which to poll for list of running containers
         "pollContainer": 10, # Interval at which to poll for container status
