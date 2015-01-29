@@ -54,7 +54,7 @@ envVarExtract r = awaitForever $ \obj -> let
   externalPorts' = mapMaybe portToInt externalPorts
 
   -- Create the Domain objects
-  domain n p = path .~ etcdPath (r ^. config) ((r ^. hostname) `T.append` n) $
+  domain n p = path .~ etcdPath r n $
                host .~ (r ^. publicHost) $
                port .~ p $
                defaultDomain r
@@ -87,6 +87,8 @@ skydnsPrefix = "skydns"
 -- i.e.
 -- Given the config has skydnsDomain = "highhock.local.", `etcdPath c "foo"`
 -- will return the record path for the "foo.highhock.local" domain
-etcdPath :: Config -> T.Text -> T.Text
-etcdPath c d = T.intercalate "/" (skydnsPrefix : pth)
-  where pth = filter (/= "") . reverse $ (d : T.split (== '.') (c ^. skydnsDomain))
+etcdPath :: Runtime -> T.Text -> T.Text
+etcdPath r d = T.intercalate "/" (skydnsPrefix : pth)
+  where pth = filter (/= "") . reverse $ (h: d : T.split (== '.') ds)
+        h = r ^. hostname
+        ds = r ^. config . skydnsDomain

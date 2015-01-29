@@ -20,6 +20,7 @@ data Config = Config
               , _configEtcdTTL :: !Int
               , _configSkydnsDomain :: !T.Text
               , _configSkydnsTTL :: !Int
+              , _configSkydnsHostname :: !(Maybe T.Text)
               , _configDockerVersion :: !T.Text
               , _configDockerUrl :: !T.Text
               , _configPublicHost :: !(Maybe T.Text)
@@ -32,7 +33,7 @@ data Config = Config
 makeFields ''Config
 
 defaultConfig :: Config
-defaultConfig = Config "http://127.0.0.1:4001/" 60 "skydns.local" 60 "v1.16"
+defaultConfig = Config "http://127.0.0.1:4001/" 60 "skydns.local" 60 Nothing "v1.16"
                 "http://127.0.0.1:2375/" Nothing "eth0" NOTICE 10 10
 
 (.?~) :: ASetter s s a a -> (Maybe a) -> s -> s
@@ -56,6 +57,7 @@ jsonExtractors o =
   , etcdTTL .?~ o ^? key "etcd" . key "ttl" . _Integral
   , skydnsDomain .?~ o ^? key "skydns" . key "domain" . _String
   , skydnsTTL .?~ o ^? key "skydns" . key "ttl" . _Integral
+  , skydnsHostname .??~ o ^? key "skydns" . key "hostname" . _String
   , dockerVersion .?~ o ^? key "docker" . key "version" . _String
   , dockerUrl .?~ o ^? key "docker" . key "url" . _String
   , mainTick .?~ o ^? key "docker" . key "poll" . _Integral .to (* 10^6)
@@ -83,6 +85,7 @@ binHandlers =
   , ("ttl", "etcd-ttl", \ttl -> etcdTTL .~ read ttl)
   , ("sd", "skydns-domain", \d -> skydnsDomain .~ T.pack d)
   , ("st", "skydns-ttl", \t -> skydnsTTL .~ read t)
+  , ("sn", "skydns-hostname", \t -> skydnsHostname .~ read t)
   , ("dv", "docker-version", \v -> dockerVersion .~ T.pack v)
   , ("d", "docker-url", \u -> dockerUrl .~ T.pack u)
   , ("p", "docker-poll", \v -> mainTick .~ (read v * 10 ^ 6))

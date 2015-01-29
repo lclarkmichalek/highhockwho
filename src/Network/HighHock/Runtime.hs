@@ -59,7 +59,7 @@ createRuntime args = do
   mdv <- findDockerVersion cfg
   dv <- must mdv "Could not find docker version"
   L.noticeM "runtime" $ "Found docker version: " ++ show dv
-  hn <- fmap T.pack N.getHostName
+  hn <- findHostname cfg
   L.noticeM "runtime" $ "Found hostname: " ++ show hn
   return $ Runtime cfg ph dv hn
 
@@ -94,6 +94,11 @@ findCfgPath _ = Nothing
 -- TODO: Don't have access to the docker lib docs atm
 findDockerVersion :: Config -> IO (Maybe T.Text)
 findDockerVersion cfg = return $ cfg ^. dockerVersion .to Just
+
+findHostname :: Config -> IO T.Text
+findHostname cfg = case cfg ^. skydnsHostname of
+                    Just hn -> return hn
+                    _ -> fmap T.pack N.getHostName
 
 -- | Tries each of the hostGettingMethods in turn,
 findPublicHost :: Config -> IO (Maybe T.Text)

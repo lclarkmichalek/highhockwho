@@ -46,7 +46,7 @@ inserter :: Runtime -> Sink Domain IO ()
 inserter r = do
   client <- liftIO $ NE.createClient [r ^. config . etcdUrl]
   awaitForever $ \d -> do
-    liftIO $ infoM "etcd.inserter" $
+    liftIO $ noticeM "etcd.inserter" $
       "Setting " ++ T.unpack (d ^. path) ++ " to " ++ T.unpack (encodeDomain d)
     mn <- liftIO $ NE.set client (d ^. path) (encodeDomain d) (Just $ r ^. config . etcdTTL)
     liftIO $ case mn of
