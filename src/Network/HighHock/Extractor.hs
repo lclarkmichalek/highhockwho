@@ -54,7 +54,7 @@ envVarExtract r = awaitForever $ \obj -> let
   externalPorts' = mapMaybe portToInt externalPorts
 
   -- Create the Domain objects
-  domain n p = path .~ etcdPath (r ^. config) n $
+  domain n p = path .~ etcdPath (r ^. config) ((r ^. hostname) `T.append` n) $
                host .~ (r ^. publicHost) $
                port .~ p $
                defaultDomain r

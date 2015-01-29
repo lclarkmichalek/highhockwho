@@ -31,6 +31,7 @@ data Runtime = Runtime
                { _runtimeConfig :: !Config
                , _runtimePublicHost :: !T.Text
                , _runtimeDockerVersion :: !T.Text
+               , _runtimeHostname :: !T.Text
                } deriving (Show, Eq)
 
 makeFields ''Runtime
@@ -58,7 +59,9 @@ createRuntime args = do
   mdv <- findDockerVersion cfg
   dv <- must mdv "Could not find docker version"
   L.noticeM "runtime" $ "Found docker version: " ++ show dv
-  return $ Runtime cfg ph dv
+  hn <- fmap T.pack N.getHostName
+  L.noticeM "runtime" $ "Found hostname: " ++ show hn
+  return $ Runtime cfg ph dv hn
 
 must :: Maybe a -> String -> IO a
 must (Just a) _ = return a
