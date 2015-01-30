@@ -26,7 +26,7 @@ library
                        Network.HighHock.Runtime,
                        Network.HighHock.Watcher
 
-  ghc-options:         -Wall
+  ghc-options:         -Wall -O3 -threaded -with-rtsopts -with-rtsopts="-N"
   default-extensions:  OverloadedStrings,
                        TemplateHaskell,
                        MultiParamTypeClasses,
@@ -39,6 +39,7 @@ library
   default-language:    Haskell2010
 
 executable highhockwho
+  ghc-options:         -Wall -O3 -threaded -with-rtsopts="-N"
   main-is:             Main.hs
   build-depends:       base, highhockwho
   default-language:    Haskell2010
